@@ -3,205 +3,164 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Energy Drink Tracker 🔋</title>
+    <title>Energy Cloud Tracker 🔋</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
         :root {
-            --bg: #0b0b0b;
-            --card: #1a1a1a;
-            --monster: #32cd32;
-            --redbull: #0052cc;
-            --burn: #e65100;
-            --nonstop: #8a2be2;
-            --hell: #ff0000;
-            --text: #ffffff;
-            --accent: #ccff00;
+            --bg: #0b0b0b; --card: #1a1a1a; --monster: #32cd32;
+            --redbull: #0052cc; --burn: #e65100; --nonstop: #8a2be2;
+            --hell: #ff0000; --text: #ffffff; --accent: #ccff00;
         }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            padding: 20px;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .header { text-align: center; margin: 20px 0; }
-        h1 { color: var(--monster); text-transform: uppercase; font-size: 1.8rem; letter-spacing: 1px; }
-        
-        .stats-panel {
-            background: var(--card);
-            padding: 15px 30px;
-            border-radius: 50px;
-            border: 1px solid #333;
-            margin-bottom: 25px;
-            position: sticky;
-            top: 15px;
-            z-index: 100;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
-            font-weight: bold;
-            font-size: 1.1rem;
-            text-align: center;
-            min-width: 200px;
-        }
-        #count { color: var(--accent); }
-
-        .category-container {
-            width: 100%;
-            max-width: 500px;
-            margin-bottom: 30px;
-        }
-        
-        h2 { 
-            font-size: 1rem; 
-            margin-bottom: 12px; 
-            padding-left: 10px; 
-            text-transform: uppercase;
-            color: #888;
-        }
-        
+        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); padding: 20px; display: flex; flex-direction: column; align-items: center; margin: 0; }
+        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+        .login-box { background: var(--card); padding: 30px; border-radius: 20px; border: 1px solid #333; text-align: center; width: 85%; max-width: 320px; }
+        input { width: 100%; padding: 14px; margin: 15px 0; border-radius: 12px; border: 1px solid #444; background: #000; color: white; box-sizing: border-box; font-size: 1rem; }
+        .btn { background: var(--monster); color: black; border: none; padding: 14px; border-radius: 12px; font-weight: bold; cursor: pointer; width: 100%; font-size: 1rem; }
+        .stats-panel { background: var(--card); padding: 15px 30px; border-radius: 50px; border: 1px solid #333; margin: 15px 0; position: sticky; top: 15px; z-index: 100; font-weight: bold; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+        .category-container { width: 100%; max-width: 500px; margin-bottom: 30px; }
+        .checklist { background: var(--card); border-radius: 15px; overflow: hidden; border: 1px solid #222; }
+        .item { display: flex; align-items: center; padding: 16px 20px; border-bottom: 1px solid #262626; cursor: pointer; transition: 0.2s; }
+        .item:active { background: #222; }
+        .checked { opacity: 0.3; background: #000 !important; }
+        .checked span { text-decoration: line-through; }
+        input[type="checkbox"] { width: 22px; height: 22px; margin-right: 18px; accent-color: var(--monster); pointer-events: none; }
+        h2 { font-size: 0.9rem; margin-bottom: 12px; padding-left: 10px; text-transform: uppercase; color: #888; letter-spacing: 1px; }
         .m-line { border-left: 4px solid var(--monster); }
         .r-line { border-left: 4px solid var(--redbull); }
         .b-line { border-left: 4px solid var(--burn); }
         .n-line { border-left: 4px solid var(--nonstop); }
         .h-line { border-left: 4px solid var(--hell); }
-
-        .checklist {
-            background: var(--card);
-            border-radius: 15px;
-            overflow: hidden;
-            border: 1px solid #222;
-        }
-        .item {
-            display: flex;
-            align-items: center;
-            padding: 16px 20px;
-            border-bottom: 1px solid #262626;
-            cursor: pointer;
-            transition: 0.2s;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .item:active { background: #222; }
-        .item:last-child { border-bottom: none; }
-
-        input[type="checkbox"] {
-            width: 22px;
-            height: 22px;
-            margin-right: 18px;
-            accent-color: var(--monster);
-            cursor: pointer;
-        }
-
-        .checked { opacity: 0.3; background: #000 !important; }
-        .checked span { text-decoration: line-through; }
+        .logout { color: #ff4444; font-size: 0.8rem; cursor: pointer; margin-top: 10px; text-decoration: underline; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h1>Energy Collection</h1>
+    <div id="login-screen">
+        <div class="login-box">
+            <h1 style="color:var(--monster); margin-top:0;">ENERGY TRACKER</h1>
+            <p style="color:#888; font-size:0.9rem;">Введіть логін для синхронізації</p>
+            <input type="text" id="username-input" placeholder="Ваш нікнейм...">
+            <button class="btn" onclick="login()">УВІЙТИ</button>
+        </div>
     </div>
 
-    <div class="stats-panel">
-        Додано: <span id="count">0</span> / <span id="total">0</span>
+    <div id="app-content" style="display: none; width: 100%; flex-direction: column; align-items: center;">
+        <div id="user-display" style="font-size: 0.8rem; margin-top: 10px; color: #aaa;">
+            Користувач: <span id="user-tag" style="color:var(--monster); font-weight:bold;"></span>
+        </div>
+        <div class="logout" onclick="logout()">Вийти з акаунту</div>
+        
+        <div class="stats-panel">Зібрано: <span id="count" style="color:var(--accent)">0</span> / <span id="total">0</span></div>
+        <div id="main-content" style="width: 100%; max-width: 500px;"></div>
     </div>
-
-    <div id="main-content" style="width: 100%; max-width: 500px;"></div>
 
     <script>
+        // Твої дані з Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDDAdnn0CVYI-L3SbARcMPsVd0Tkhm1RZY",
+            authDomain: "energy-51f43.firebaseapp.com",
+            databaseURL: "https://energy-51f43-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "energy-51f43",
+            storageBucket: "energy-51f43.firebasestorage.app",
+            messagingSenderId: "600748401111",
+            appId: "1:600748401111:web:744b792213099709a52b92"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        let currentUser = "";
+        let userProgress = {};
+
         const collection = {
-            "Monster Energy": [
-                "Classic", "Classic Zero Sugar", "Classic Absolutely Zero", "Assault",
-                "Ultra White", "Ultra Paradise", "Ultra Golden Pineapple", "Ultra Watermelon", 
-                "Ultra Fantasy Ruby Red", "Ultra Rosa", "Ultra Peachy Keen", 
-                "Ultra Violet", "Ultra Black", "Ultra Strawberry Dreams", 
-                "Ultra Fiesta Mango", "Ultra Blue Hawaiian", "Ultra Sunrise",
-                "Bad Apple", "Viking Berry", "Aussie Lemonade", "Monarch", 
-                "Khaotic", "Mango Loco", "Pipeline Punch", "Pacific Punch", 
-                "Rio Punch", "Mixxd", "Nitro Super Dry", "Nitro Cosmic Peach",
-                "Reserve White Pineapple", "Rehab Peach Tea", "Rehab Lemon Tea", 
-                "Lewis Hamilton", "Lando Norris", "Full Throttle", 
-                "VR46", "VR46 Zero Sugar", "Killer Brew Loca Moca"
-            ],
-            "Red Bull Edition": [
-                "Classic", "Red (Watermelon)", "Ruby (Apricot & Strawberry)", 
-                "Peach (White Peach)", "Apricot", "Winter (Pear Cinnamon)", 
-                "Yellow (Tropical)", "Lime Green (Lime)", "Green (Cactus Fruit)", 
-                "Ice (Vanilla Ice Berry)", "Sea Blue (Juneberry)", "Blue (Blueberry)", 
-                "Lilac (Acai Berry)", "Purple (Açaí)", "Peach Sugarfree", 
-                "Pink Sugarfree", "White (Coconut & Berry)", "Zero", "Sugarfree"
-            ],
-            "Burn Energy": [
-                "Burn Zero Watermelon", "Original", "Dark Energy", 
-                "Fruit Punch", "Apple Kiwi", "Guava", "Orange Fire", "Mango"
-            ],
-            "Non Stop": [
-                "Jungle", "Boost", "Original", "Original Zero", "Spark Zero",
-                "Ultra", "Zoom", "Stalker Orange", "Stalker Purple",
-                "Stalker Green", "Splash", "20 Years Edition", "Military", "Green Energy"
-            ],
-            "Hell Energy": [
-                "Hell Classic", "Hell Sparkler", "Summer Cool Guanabana Mango", 
-                "Summer Cool Groovy Grapefruit", "Classic + Old", "Classic + New", 
-                "Classic 20th Anniversary", "Strong Apple", "Strong Red Grape", 
-                "Strong Watermelon", "Maracuja Spritz", "Lime Spritz", 
-                "Multi+", "Focus+", "Hell Zero Strawberry"
-            ]
+            "Monster Energy": ["Classic", "Classic Zero Sugar", "Classic Absolutely Zero", "Assault", "Ultra White", "Ultra Paradise", "Ultra Golden Pineapple", "Ultra Watermelon", "Ultra Fantasy Ruby Red", "Ultra Rosa", "Ultra Peachy Keen", "Ultra Violet", "Ultra Black", "Ultra Strawberry Dreams", "Ultra Fiesta Mango", "Ultra Blue Hawaiian", "Ultra Sunrise", "Bad Apple", "Viking Berry", "Aussie Lemonade", "Monarch", "Khaotic", "Mango Loco", "Pipeline Punch", "Pacific Punch", "Rio Punch", "Mixxd", "Nitro Super Dry", "Nitro Cosmic Peach", "Reserve White Pineapple", "Rehab Peach Tea", "Rehab Lemon Tea", "Lewis Hamilton", "Lando Norris", "Full Throttle", "VR46", "VR46 Zero Sugar", "Killer Brew Loca Moca"],
+            "Red Bull": ["Classic", "Red (Watermelon)", "Ruby (Apricot & Strawberry)", "Peach (White Peach)", "Apricot", "Winter (Pear Cinnamon)", "Yellow (Tropical)", "Lime Green (Lime)", "Green (Cactus Fruit)", "Ice (Vanilla Ice Berry)", "Sea Blue (Juneberry)", "Blue (Blueberry)", "Lilac (Acai Berry)", "Purple (Açaí)", "Peach Sugarfree", "Pink Sugarfree", "White (Coconut & Berry)", "Zero", "Sugarfree"],
+            "Burn Energy": ["Burn Zero Watermelon", "Original", "Dark Energy", "Fruit Punch", "Apple Kiwi", "Guava", "Orange Fire", "Mango"],
+            "Non Stop": ["Jungle", "Boost", "Original", "Original Zero", "Spark Zero", "Ultra", "Zoom", "Stalker Orange", "Stalker Purple", "Stalker Green", "Splash", "20 Years Edition", "Military", "Green Energy"],
+            "Hell Energy": ["Hell Classic", "Hell Sparkler", "Summer Cool Guanabana Mango", "Summer Cool Groovy Grapefruit", "Classic + Old", "Classic + New", "Classic 20th Anniversary", "Strong Apple", "Strong Red Grape", "Strong Watermelon", "Maracuja Spritz", "Lime Spritz", "Multi+", "Focus+", "Hell Zero Strawberry"]
         };
 
-        const container = document.getElementById('main-content');
-        let totalItems = 0;
-
-        for (const [category, items] of Object.entries(collection)) {
-            const catDiv = document.createElement('div');
-            catDiv.className = 'category-container';
+        async function login() {
+            const name = document.getElementById('username-input').value.trim().toLowerCase();
+            if (!name) return alert("Введіть логін!");
             
-            let borderClass = 'm-line';
-            if(category.includes('Red Bull')) borderClass = 'r-line';
-            if(category.includes('Burn')) borderClass = 'b-line';
-            if(category.includes('Non Stop')) borderClass = 'n-line';
-            if(category.includes('Hell')) borderClass = 'h-line';
+            currentUser = name;
+            localStorage.setItem('activeUser', name);
+            
+            const snapshot = await db.ref('users/' + currentUser).once('value');
+            userProgress = snapshot.val() || {};
+            initApp();
+        }
 
-            catDiv.innerHTML = `<h2 class="${borderClass}">${category}</h2>`;
-            const listDiv = document.createElement('div');
-            listDiv.className = 'checklist';
+        function logout() {
+            localStorage.removeItem('activeUser');
+            location.reload();
+        }
 
-            items.forEach(name => {
-                totalItems++;
-                const id = (category + "-" + name).replace(/\s+/g, '-').toLowerCase();
-                const isChecked = localStorage.getItem(id) === 'true';
+        function initApp() {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('app-content').style.display = 'flex';
+            document.getElementById('user-tag').innerText = currentUser;
+            renderList();
+        }
 
-                const itemDiv = document.createElement('div');
-                itemDiv.className = `item ${isChecked ? 'checked' : ''}`;
-                itemDiv.innerHTML = `
-                    <input type="checkbox" id="${id}" ${isChecked ? 'checked' : ''}>
-                    <span>${name}</span>
-                `;
+        function renderList() {
+            const container = document.getElementById('main-content');
+            container.innerHTML = "";
+            let totalCount = 0;
 
-                itemDiv.onclick = (e) => {
-                    const cb = itemDiv.querySelector('input');
-                    if(e.target !== cb) cb.checked = !cb.checked;
-                    localStorage.setItem(id, cb.checked);
-                    itemDiv.classList.toggle('checked', cb.checked);
-                    updateStats();
-                };
+            for (const [category, items] of Object.entries(collection)) {
+                const catDiv = document.createElement('div');
+                catDiv.className = 'category-container';
+                let bc = category.includes('Red Bull') ? 'r-line' : category.includes('Burn') ? 'b-line' : category.includes('Non Stop') ? 'n-line' : category.includes('Hell') ? 'h-line' : 'm-line';
+                
+                catDiv.innerHTML = `<h2 class="${bc}">${category}</h2>`;
+                const listDiv = document.createElement('div');
+                listDiv.className = 'checklist';
 
-                listDiv.appendChild(itemDiv);
-            });
+                items.forEach(name => {
+                    totalCount++;
+                    const itemID = (category + "-" + name).replace(/\s+/g, '-').toLowerCase();
+                    const isChecked = userProgress[itemID] || false;
 
-            catDiv.appendChild(listDiv);
-            container.appendChild(catDiv);
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = `item ${isChecked ? 'checked' : ''}`;
+                    itemDiv.innerHTML = `<input type="checkbox" ${isChecked ? 'checked' : ''}><span>${name}</span>`;
+
+                    itemDiv.onclick = () => {
+                        const cb = itemDiv.querySelector('input');
+                        cb.checked = !cb.checked;
+                        userProgress[itemID] = cb.checked;
+                        itemDiv.classList.toggle('checked', cb.checked);
+                        
+                        // Відправка в Firebase
+                        db.ref('users/' + currentUser).set(userProgress);
+                        updateStats();
+                    };
+                    listDiv.appendChild(itemDiv);
+                });
+                catDiv.appendChild(listDiv);
+                container.appendChild(catDiv);
+            }
+            document.getElementById('total').innerText = totalCount;
+            updateStats();
         }
 
         function updateStats() {
-            const checked = document.querySelectorAll('input:checked').length;
+            const checked = Object.values(userProgress).filter(v => v === true).length;
             document.getElementById('count').innerText = checked;
-            document.getElementById('total').innerText = totalItems;
         }
 
-        updateStats();
+        window.onload = () => {
+            const savedUser = localStorage.getItem('activeUser');
+            if (savedUser) {
+                currentUser = savedUser;
+                db.ref('users/' + currentUser).once('value').then(snap => {
+                    userProgress = snap.val() || {};
+                    initApp();
+                });
+            }
+        };
     </script>
 </body>
 </html>
