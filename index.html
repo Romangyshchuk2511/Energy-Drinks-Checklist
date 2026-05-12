@@ -13,33 +13,52 @@
             --hell: #ff0000; --text: #ffffff; --accent: #ccff00;
         }
         body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); padding: 20px; display: flex; flex-direction: column; align-items: center; margin: 0; }
-        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+        
+        /* Екран логіну */
+        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); display: flex; justify-content: center; align-items: center; z-index: 2000; }
         .login-box { background: var(--card); padding: 30px; border-radius: 20px; border: 1px solid #333; text-align: center; width: 85%; max-width: 320px; }
-        input { width: 100%; padding: 14px; margin: 15px 0; border-radius: 12px; border: 1px solid #444; background: #000; color: white; box-sizing: border-box; font-size: 1rem; }
-        .btn { background: var(--monster); color: black; border: none; padding: 14px; border-radius: 12px; font-weight: bold; cursor: pointer; width: 100%; font-size: 1rem; }
+        
+        /* Фільтри (Вибір колекцій) */
+        .filter-section {
+            background: var(--card); width: 100%; max-width: 500px; 
+            border-radius: 15px; padding: 15px; margin-bottom: 20px; border: 1px solid #333;
+        }
+        .filter-title { font-size: 0.8rem; color: #888; text-transform: uppercase; margin-bottom: 10px; display: block; }
+        .filter-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+        .chip {
+            padding: 8px 15px; border-radius: 20px; background: #222; 
+            font-size: 0.85rem; cursor: pointer; border: 1px solid #444; transition: 0.3s;
+        }
+        .chip.active { background: var(--monster); color: black; border-color: var(--monster); font-weight: bold; }
+
+        input { width: 100%; padding: 14px; margin: 15px 0; border-radius: 12px; border: 1px solid #444; background: #000; color: white; box-sizing: border-box; }
+        .btn { background: var(--monster); color: black; border: none; padding: 14px; border-radius: 12px; font-weight: bold; cursor: pointer; width: 100%; }
+        
         .stats-panel { background: var(--card); padding: 15px 30px; border-radius: 50px; border: 1px solid #333; margin: 15px 0; position: sticky; top: 15px; z-index: 100; font-weight: bold; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
-        .category-container { width: 100%; max-width: 500px; margin-bottom: 30px; }
+        
+        .category-container { width: 100%; max-width: 500px; margin-bottom: 30px; display: none; } /* По замовчуванню приховано */
+        .category-container.visible { display: block; }
+
         .checklist { background: var(--card); border-radius: 15px; overflow: hidden; border: 1px solid #222; }
-        .item { display: flex; align-items: center; padding: 16px 20px; border-bottom: 1px solid #262626; cursor: pointer; transition: 0.2s; }
-        .item:active { background: #222; }
+        .item { display: flex; align-items: center; padding: 16px 20px; border-bottom: 1px solid #262626; cursor: pointer; }
         .checked { opacity: 0.3; background: #000 !important; }
         .checked span { text-decoration: line-through; }
-        input[type="checkbox"] { width: 22px; height: 22px; margin-right: 18px; accent-color: var(--monster); pointer-events: none; }
-        h2 { font-size: 0.9rem; margin-bottom: 12px; padding-left: 10px; text-transform: uppercase; color: #888; letter-spacing: 1px; }
+        
+        h2 { font-size: 0.9rem; margin-bottom: 12px; padding-left: 10px; text-transform: uppercase; color: #888; }
         .m-line { border-left: 4px solid var(--monster); }
         .r-line { border-left: 4px solid var(--redbull); }
         .b-line { border-left: 4px solid var(--burn); }
         .n-line { border-left: 4px solid var(--nonstop); }
         .h-line { border-left: 4px solid var(--hell); }
-        .logout { color: #ff4444; font-size: 0.8rem; cursor: pointer; margin-top: 10px; text-decoration: underline; }
+        
+        .logout { color: #ff4444; font-size: 0.8rem; cursor: pointer; margin: 10px 0; text-decoration: underline; }
     </style>
 </head>
 <body>
 
     <div id="login-screen">
         <div class="login-box">
-            <h1 style="color:var(--monster); margin-top:0;">ENERGY TRACKER</h1>
-            <p style="color:#888; font-size:0.9rem;">Введіть логін для синхронізації</p>
+            <h1 style="color:var(--monster);">ENERGY TRACKER</h1>
             <input type="text" id="username-input" placeholder="Ваш нікнейм...">
             <button class="btn" onclick="login()">УВІЙТИ</button>
         </div>
@@ -49,14 +68,18 @@
         <div id="user-display" style="font-size: 0.8rem; margin-top: 10px; color: #aaa;">
             Користувач: <span id="user-tag" style="color:var(--monster); font-weight:bold;"></span>
         </div>
-        <div class="logout" onclick="logout()">Вийти з акаунту</div>
+        <div class="logout" onclick="logout()">Вийти</div>
         
+        <div class="filter-section">
+            <span class="filter-title">Що ви колекціонуєте?</span>
+            <div class="filter-chips" id="filter-chips"></div>
+        </div>
+
         <div class="stats-panel">Зібрано: <span id="count" style="color:var(--accent)">0</span> / <span id="total">0</span></div>
         <div id="main-content" style="width: 100%; max-width: 500px;"></div>
     </div>
 
     <script>
-        // Твої дані з Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyDDAdnn0CVYI-L3SbARcMPsVd0Tkhm1RZY",
             authDomain: "energy-51f43.firebaseapp.com",
@@ -71,10 +94,11 @@
         const db = firebase.database();
         let currentUser = "";
         let userProgress = {};
+        let activeCollections = JSON.parse(localStorage.getItem('activeCollections')) || ["Monster Energy", "Red Bull", "Burn Energy", "Non Stop", "Hell Energy"];
 
         const collection = {
             "Monster Energy": ["Classic", "Classic Zero Sugar", "Classic Absolutely Zero", "Assault", "Ultra White", "Ultra Paradise", "Ultra Golden Pineapple", "Ultra Watermelon", "Ultra Fantasy Ruby Red", "Ultra Rosa", "Ultra Peachy Keen", "Ultra Violet", "Ultra Black", "Ultra Strawberry Dreams", "Ultra Fiesta Mango", "Ultra Blue Hawaiian", "Ultra Sunrise", "Bad Apple", "Viking Berry", "Aussie Lemonade", "Monarch", "Khaotic", "Mango Loco", "Pipeline Punch", "Pacific Punch", "Rio Punch", "Mixxd", "Nitro Super Dry", "Nitro Cosmic Peach", "Reserve White Pineapple", "Rehab Peach Tea", "Rehab Lemon Tea", "Lewis Hamilton", "Lando Norris", "Full Throttle", "VR46", "VR46 Zero Sugar", "Killer Brew Loca Moca"],
-            "Red Bull": ["Classic", "Red", "Ruby", "Peach", "Apricot", "Winter", "Yellow", "Lime Green", "Green", "Ice", "Sea Blue", "Blue", "Lilac", "Purple", "Peach Sugarfree", "Pink Sugarfree", "White", "Zero", "Sugarfree"],
+            "Red Bull": ["Classic", "Red (Watermelon)", "Ruby (Apricot & Strawberry)", "Peach (White Peach)", "Apricot", "Winter (Pear Cinnamon)", "Yellow (Tropical)", "Lime Green (Lime)", "Green (Cactus Fruit)", "Ice (Vanilla Ice Berry)", "Sea Blue (Juneberry)", "Blue (Blueberry)", "Lilac (Acai Berry)", "Purple (Açaí)", "Peach Sugarfree", "Pink Sugarfree", "White (Coconut & Berry)", "Zero", "Sugarfree"],
             "Burn Energy": ["Burn Zero Watermelon", "Original", "Dark Energy", "Fruit Punch", "Apple Kiwi", "Guava", "Orange Fire", "Mango"],
             "Non Stop": ["Jungle", "Boost", "Original", "Original Zero", "Spark Zero", "Ultra", "Zoom", "Stalker Orange", "Stalker Purple", "Stalker Green", "Splash", "20 Years Edition", "Military", "Green Energy"],
             "Hell Energy": ["Hell Classic", "Hell Sparkler", "Summer Cool Guanabana Mango", "Summer Cool Groovy Grapefruit", "Classic + Old", "Classic + New", "Classic 20th Anniversary", "Strong Apple", "Strong Red Grape", "Strong Watermelon", "Maracuja Spritz", "Lime Spritz", "Multi+", "Focus+", "Hell Zero Strawberry"]
@@ -82,26 +106,43 @@
 
         async function login() {
             const name = document.getElementById('username-input').value.trim().toLowerCase();
-            if (!name) return alert("Введіть логін!");
-            
+            if (!name) return;
             currentUser = name;
             localStorage.setItem('activeUser', name);
-            
             const snapshot = await db.ref('users/' + currentUser).once('value');
             userProgress = snapshot.val() || {};
             initApp();
         }
 
-        function logout() {
-            localStorage.removeItem('activeUser');
-            location.reload();
-        }
+        function logout() { localStorage.removeItem('activeUser'); location.reload(); }
 
         function initApp() {
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('app-content').style.display = 'flex';
             document.getElementById('user-tag').innerText = currentUser;
+            createFilters();
             renderList();
+        }
+
+        function createFilters() {
+            const chipContainer = document.getElementById('filter-chips');
+            chipContainer.innerHTML = "";
+            Object.keys(collection).forEach(cat => {
+                const chip = document.createElement('div');
+                chip.className = `chip ${activeCollections.includes(cat) ? 'active' : ''}`;
+                chip.innerText = cat;
+                chip.onclick = () => {
+                    if (activeCollections.includes(cat)) {
+                        activeCollections = activeCollections.filter(c => c !== cat);
+                    } else {
+                        activeCollections.push(cat);
+                    }
+                    localStorage.setItem('activeCollections', JSON.stringify(activeCollections));
+                    chip.classList.toggle('active');
+                    renderList();
+                };
+                chipContainer.appendChild(chip);
+            });
         }
 
         function renderList() {
@@ -110,30 +151,30 @@
             let totalCount = 0;
 
             for (const [category, items] of Object.entries(collection)) {
+                const isVisible = activeCollections.includes(category);
                 const catDiv = document.createElement('div');
-                catDiv.className = 'category-container';
-                let bc = category.includes('Red Bull') ? 'r-line' : category.includes('Burn') ? 'b-line' : category.includes('Non Stop') ? 'n-line' : category.includes('Hell') ? 'h-line' : 'm-line';
+                catDiv.className = `category-container ${isVisible ? 'visible' : ''}`;
                 
+                let bc = category.includes('Red Bull') ? 'r-line' : category.includes('Burn') ? 'b-line' : category.includes('Non Stop') ? 'n-line' : category.includes('Hell') ? 'h-line' : 'm-line';
                 catDiv.innerHTML = `<h2 class="${bc}">${category}</h2>`;
+                
                 const listDiv = document.createElement('div');
                 listDiv.className = 'checklist';
 
                 items.forEach(name => {
-                    totalCount++;
+                    if (isVisible) totalCount++;
                     const itemID = (category + "-" + name).replace(/\s+/g, '-').toLowerCase();
                     const isChecked = userProgress[itemID] || false;
 
                     const itemDiv = document.createElement('div');
                     itemDiv.className = `item ${isChecked ? 'checked' : ''}`;
-                    itemDiv.innerHTML = `<input type="checkbox" ${isChecked ? 'checked' : ''}><span>${name}</span>`;
+                    itemDiv.innerHTML = `<input type="checkbox" ${isChecked ? 'checked' : ''} style="pointer-events:none; width:20px; height:20px; margin-right:15px; accent-color:var(--monster);"><span>${name}</span>`;
 
                     itemDiv.onclick = () => {
                         const cb = itemDiv.querySelector('input');
                         cb.checked = !cb.checked;
                         userProgress[itemID] = cb.checked;
                         itemDiv.classList.toggle('checked', cb.checked);
-                        
-                        // Відправка в Firebase
                         db.ref('users/' + currentUser).set(userProgress);
                         updateStats();
                     };
@@ -147,8 +188,17 @@
         }
 
         function updateStats() {
-            const checked = Object.values(userProgress).filter(v => v === true).length;
-            document.getElementById('count').innerText = checked;
+            let checkedCount = 0;
+            // Рахуємо тільки ті галочки, які належать до видимих колекцій
+            for (const [category, items] of Object.entries(collection)) {
+                if (activeCollections.includes(category)) {
+                    items.forEach(name => {
+                        const itemID = (category + "-" + name).replace(/\s+/g, '-').toLowerCase();
+                        if (userProgress[itemID]) checkedCount++;
+                    });
+                }
+            }
+            document.getElementById('count').innerText = checkedCount;
         }
 
         window.onload = () => {
