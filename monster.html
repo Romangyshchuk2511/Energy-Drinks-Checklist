@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Energy Drink Collector</title>
+    <style>
+        :root {
+            --bg: #0b0b0b;
+            --card: #161616;
+            --monster: #32cd32;
+            --redbull: #002147;
+            --hell: #ff0000;
+            --text: #ffffff;
+        }
+        body {
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+        }
+        .header { text-align: center; margin-bottom: 25px; margin-top: 10px; }
+        h1 { color: var(--monster); text-transform: uppercase; font-size: 2em; margin: 0; }
+        
+        .stats-panel {
+            background: var(--card);
+            padding: 12px 25px;
+            border-radius: 30px;
+            border: 1px solid #333;
+            margin-bottom: 25px;
+            position: sticky;
+            top: 10px;
+            z-index: 100;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
+        .category-container {
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 30px;
+        }
+        
+        h2 { border-left: 4px solid #444; padding-left: 12px; font-size: 1.1em; margin-bottom: 12px; color: #eee; }
+        .monster-title { border-color: var(--monster); }
+        .redbull-title { border-color: var(--redbull); }
+        .hell-title { border-color: var(--hell); }
+
+        .checklist {
+            background: var(--card);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #222;
+        }
+        .item {
+            display: flex;
+            align-items: center;
+            padding: 14px 18px;
+            border-bottom: 1px solid #222;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .item:active { background: #222; }
+        
+        input[type="checkbox"] {
+            width: 22px;
+            height: 22px;
+            margin-right: 15px;
+            accent-color: var(--monster);
+        }
+
+        .checked { opacity: 0.35; background: #000 !important; }
+        .checked span { text-decoration: line-through; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Drink Tracker</h1>
+    </div>
+
+    <div class="stats-panel">
+        Зібрано: <span id="count">0</span> / <span id="total">0</span>
+    </div>
+
+    <div id="main-content" style="width: 100%; max-width: 500px;"></div>
+
+    <script>
+        const collection = {
+            "Monster Ultra (Zero)": [
+                "Ultra Paradise", "Ultra Golden Pineapple", "Ultra Watermelon", 
+                "Ultra Fantasy Ruby Red", "Ultra Rosa", "Ultra Peachy Keen", 
+                "Ultra Violet", "Ultra Black", "Ultra Strawberry Dreams", 
+                "Ultra White", "Ultra Fiesta Mango", "Ultra Blue Hawaiian", "Ultra Sunrise"
+            ],
+            "Monster Juice & Nitro": [
+                "Bad Apple", "Viking Berry", "Aussie Lemonade", "Monarch", 
+                "Khaotic", "Mango Loco", "Pipeline Punch", "Pacific Punch", 
+                "Rio Punch", "Mixxd", "Nitro Super Dry", "Nitro Cosmic Peach"
+            ],
+            "Monster Classic & Special": [
+                "Classic", "Classic Zero Sugar", "Classic Absolutely Zero", "Assault",
+                "Reserve White Pineapple", "Rehab Peach Tea", "Rehab Lemon Tea", 
+                "Lewis Hamilton", "Lando Norris", "Full Throttle", 
+                "VR46", "VR46 Zero Sugar", "Killer Brew Loca Moca"
+            ],
+            "Red Bull Editions": [
+                "Red Bull Original", "Sugarfree", "The Summer Edition (Juneberry)",
+                "The Sea Blue Edition (Dragon Fruit)", "The Amber Edition (Strawberry-Apricot)",
+                "The Red Edition (Watermelon)", "The Blue Edition (Blueberry)",
+                "The Tropical Edition", "The White Edition (Coconut & Berry)"
+            ],
+            "Hell Energy": [
+                "Hell Classic", "Hell Strong Apple", "Hell Strong Red Grape",
+                "Hell Zero Strawberry", "Hell Summer Cool (Sun Smiles)",
+                "Hell Summer Cool (Night Surf)", "Hell Ice Cool"
+            ]
+        };
+
+        const container = document.getElementById('main-content');
+        let totalItems = 0;
+
+        for (const [category, items] of Object.entries(collection)) {
+            const catDiv = document.createElement('div');
+            catDiv.className = 'category-container';
+            
+            // Визначаємо колір заголовку за назвою
+            let titleClass = 'monster-title';
+            if(category.includes('Red Bull')) titleClass = 'redbull-title';
+            if(category.includes('Hell')) titleClass = 'hell-title';
+
+            catDiv.innerHTML = `<h2 class="${titleClass}">${category}</h2>`;
+            
+            const listDiv = document.createElement('div');
+            listDiv.className = 'checklist';
+
+            items.forEach(name => {
+                totalItems++;
+                const id = name.replace(/\s+/g, '-').toLowerCase();
+                const isChecked = localStorage.getItem(id) === 'true';
+
+                const itemDiv = document.createElement('div');
+                itemDiv.className = `item ${isChecked ? 'checked' : ''}`;
+                itemDiv.innerHTML = `
+                    <input type="checkbox" id="${id}" ${isChecked ? 'checked' : ''}>
+                    <span>${name}</span>
+                `;
+
+                itemDiv.onclick = (e) => {
+                    const cb = itemDiv.querySelector('input');
+                    if(e.target !== cb) cb.checked = !cb.checked;
+                    localStorage.setItem(id, cb.checked);
+                    itemDiv.classList.toggle('checked', cb.checked);
+                    updateStats();
+                };
+
+                listDiv.appendChild(itemDiv);
+            });
+
+            catDiv.appendChild(listDiv);
+            container.appendChild(catDiv);
+        }
+
+        function updateStats() {
+            const checked = document.querySelectorAll('input:checked').length;
+            document.getElementById('count').innerText = checked;
+            document.getElementById('total').innerText = totalItems;
+        }
+
+        updateStats();
+    </script>
+</body>
+</html>
