@@ -4,40 +4,47 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Energy Drink Collector</title>
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Energy Drink Tracker 🔋</title>
     <style>
         :root {
             --bg: #0b0b0b;
-            --card: #161616;
+            --card: #1a1a1a;
             --monster: #32cd32;
-            --redbull: #002147;
+            --redbull: #0052cc;
             --hell: #ff0000;
             --text: #ffffff;
+            --accent: #ccff00;
         }
         body {
-            font-family: 'Segoe UI', Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background: var(--bg);
             color: var(--text);
             padding: 20px;
+            margin: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin: 0;
         }
-        .header { text-align: center; margin-bottom: 25px; margin-top: 10px; }
-        h1 { color: var(--monster); text-transform: uppercase; font-size: 2em; margin: 0; }
+        .header { text-align: center; margin: 20px 0; }
+        h1 { color: var(--monster); text-transform: uppercase; font-size: 1.8rem; letter-spacing: 1px; }
         
         .stats-panel {
             background: var(--card);
-            padding: 12px 25px;
-            border-radius: 30px;
+            padding: 15px 30px;
+            border-radius: 50px;
             border: 1px solid #333;
             margin-bottom: 25px;
             position: sticky;
-            top: 10px;
+            top: 15px;
             z-index: 100;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            font-weight: bold;
+            font-size: 1.1rem;
+            text-align: center;
+            min-width: 180px;
         }
+        #count { color: var(--accent); }
 
         .category-container {
             width: 100%;
@@ -45,53 +52,62 @@
             margin-bottom: 30px;
         }
         
-        h2 { border-left: 4px solid #444; padding-left: 12px; font-size: 1.1em; margin-bottom: 12px; color: #eee; }
-        .monster-title { border-color: var(--monster); }
-        .redbull-title { border-color: var(--redbull); }
-        .hell-title { border-color: var(--hell); }
+        h2 { 
+            font-size: 1rem; 
+            margin-bottom: 12px; 
+            padding-left: 10px; 
+            text-transform: uppercase;
+            color: #888;
+        }
+        .m-line { border-left: 4px solid var(--monster); }
+        .r-line { border-left: 4px solid var(--redbull); }
+        .h-line { border-left: 4px solid var(--hell); }
 
         .checklist {
             background: var(--card);
-            border-radius: 12px;
+            border-radius: 15px;
             overflow: hidden;
             border: 1px solid #222;
         }
         .item {
             display: flex;
             align-items: center;
-            padding: 14px 18px;
-            border-bottom: 1px solid #222;
+            padding: 16px 20px;
+            border-bottom: 1px solid #262626;
             cursor: pointer;
+            transition: 0.2s;
             -webkit-tap-highlight-color: transparent;
         }
         .item:active { background: #222; }
-        
+        .item:last-child { border-bottom: none; }
+
         input[type="checkbox"] {
             width: 22px;
             height: 22px;
-            margin-right: 15px;
+            margin-right: 18px;
             accent-color: var(--monster);
+            cursor: pointer;
         }
 
-        .checked { opacity: 0.35; background: #000 !important; }
+        .checked { opacity: 0.3; background: #000 !important; }
         .checked span { text-decoration: line-through; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1>Drink Tracker</h1>
+        <h1>My Collection</h1>
     </div>
 
     <div class="stats-panel">
-        Зібрано: <span id="count">0</span> / <span id="total">0</span>
+        Done: <span id="count">0</span> / <span id="total">0</span>
     </div>
 
     <div id="main-content" style="width: 100%; max-width: 500px;"></div>
 
     <script>
         const collection = {
-            "Monster Ultra (Zero)": [
+            "Monster Ultra": [
                 "Ultra Paradise", "Ultra Golden Pineapple", "Ultra Watermelon", 
                 "Ultra Fantasy Ruby Red", "Ultra Rosa", "Ultra Peachy Keen", 
                 "Ultra Violet", "Ultra Black", "Ultra Strawberry Dreams", 
@@ -102,17 +118,21 @@
                 "Khaotic", "Mango Loco", "Pipeline Punch", "Pacific Punch", 
                 "Rio Punch", "Mixxd", "Nitro Super Dry", "Nitro Cosmic Peach"
             ],
-            "Monster Classic & Special": [
+            "Monster Classic & Collabs": [
                 "Classic", "Classic Zero Sugar", "Classic Absolutely Zero", "Assault",
                 "Reserve White Pineapple", "Rehab Peach Tea", "Rehab Lemon Tea", 
                 "Lewis Hamilton", "Lando Norris", "Full Throttle", 
                 "VR46", "VR46 Zero Sugar", "Killer Brew Loca Moca"
             ],
-            "Red Bull Editions": [
-                "Red Bull Original", "Sugarfree", "The Summer Edition (Juneberry)",
-                "The Sea Blue Edition (Dragon Fruit)", "The Amber Edition (Strawberry-Apricot)",
-                "The Red Edition (Watermelon)", "The Blue Edition (Blueberry)",
-                "The Tropical Edition", "The White Edition (Coconut & Berry)"
+            "Red Bull Edition": [
+                "Red Bull Classic", "Red (Watermelon)", "Ruby (Apricot & Strawberry)", 
+                "Peach (White Peach)", "Apricot", "Winter (Pear Cinnamon)", 
+                "Yellow (Tropical)", "Lime Green (Lime)", "Green (Cactus Fruit)", 
+                "Ice (Vanilla Ice Berry)", "Sea Blue (Juneberry)", "Blue (Blueberry)", 
+                "Lilac (Acai Berry)", "Purple (Açaí)", "Peach (Variant 2)", 
+                "Peach (Variant 3)", "Peach (Variant 4)", "Peach Sugarfree", 
+                "Pink Sugarfree (Forest Fruits)", "White (Coconut & Berry)", 
+                "Spring (Sugarfree)", "Zero", "Sugarfree"
             ],
             "Hell Energy": [
                 "Hell Classic", "Hell Strong Apple", "Hell Strong Red Grape",
@@ -128,19 +148,18 @@
             const catDiv = document.createElement('div');
             catDiv.className = 'category-container';
             
-            // Визначаємо колір заголовку за назвою
-            let titleClass = 'monster-title';
-            if(category.includes('Red Bull')) titleClass = 'redbull-title';
-            if(category.includes('Hell')) titleClass = 'hell-title';
+            let borderClass = 'm-line';
+            if(category.includes('Red Bull')) borderClass = 'r-line';
+            if(category.includes('Hell')) borderClass = 'h-line';
 
-            catDiv.innerHTML = `<h2 class="${titleClass}">${category}</h2>`;
-            
+            catDiv.innerHTML = `<h2 class="${borderClass}">${category}</h2>`;
             const listDiv = document.createElement('div');
             listDiv.className = 'checklist';
 
             items.forEach(name => {
                 totalItems++;
-                const id = name.replace(/\s+/g, '-').toLowerCase();
+                // Створюємо унікальний ID, включаючи категорію, щоб уникнути дублів (наприклад, "Classic")
+                const id = (category + "-" + name).replace(/\s+/g, '-').toLowerCase();
                 const isChecked = localStorage.getItem(id) === 'true';
 
                 const itemDiv = document.createElement('div');
@@ -152,7 +171,11 @@
 
                 itemDiv.onclick = (e) => {
                     const cb = itemDiv.querySelector('input');
-                    if(e.target !== cb) cb.checked = !cb.checked;
+                    // Якщо клікнули не по самому чекбоксу, перемикаємо його вручну
+                    if(e.target !== cb) {
+                        cb.checked = !cb.checked;
+                    }
+                    // Оновлюємо стан
                     localStorage.setItem(id, cb.checked);
                     itemDiv.classList.toggle('checked', cb.checked);
                     updateStats();
