@@ -12,6 +12,8 @@
             --card: #1a1a1a;
             --monster: #32cd32;
             --redbull: #0052cc;
+            --burn: #e65100;
+            --nonstop: #8a2be2;
             --hell: #ff0000;
             --text: #ffffff;
             --accent: #ccff00;
@@ -42,7 +44,7 @@
             font-weight: bold;
             font-size: 1.1rem;
             text-align: center;
-            min-width: 180px;
+            min-width: 200px;
         }
         #count { color: var(--accent); }
 
@@ -59,8 +61,12 @@
             text-transform: uppercase;
             color: #888;
         }
+        
+        /* Кольорові індикатори для брендів */
         .m-line { border-left: 4px solid var(--monster); }
         .r-line { border-left: 4px solid var(--redbull); }
+        .b-line { border-left: 4px solid var(--burn); }
+        .n-line { border-left: 4px solid var(--nonstop); }
         .h-line { border-left: 4px solid var(--hell); }
 
         .checklist {
@@ -96,11 +102,11 @@
 <body>
 
     <div class="header">
-        <h1>My Collection</h1>
+        <h1>Energy Collection</h1>
     </div>
 
     <div class="stats-panel">
-        Done: <span id="count">0</span> / <span id="total">0</span>
+        Додано: <span id="count">0</span> / <span id="total">0</span>
     </div>
 
     <div id="main-content" style="width: 100%; max-width: 500px;"></div>
@@ -118,26 +124,29 @@
                 "Khaotic", "Mango Loco", "Pipeline Punch", "Pacific Punch", 
                 "Rio Punch", "Mixxd", "Nitro Super Dry", "Nitro Cosmic Peach"
             ],
-            "Monster Classic & Collabs": [
-                "Classic", "Classic Zero Sugar", "Classic Absolutely Zero", "Assault",
-                "Reserve White Pineapple", "Rehab Peach Tea", "Rehab Lemon Tea", 
-                "Lewis Hamilton", "Lando Norris", "Full Throttle", 
-                "VR46", "VR46 Zero Sugar", "Killer Brew Loca Moca"
-            ],
             "Red Bull Edition": [
-                "Red Bull Classic", "Red (Watermelon)", "Ruby (Apricot & Strawberry)", 
+                "Classic", "Red (Watermelon)", "Ruby (Apricot & Strawberry)", 
                 "Peach (White Peach)", "Apricot", "Winter (Pear Cinnamon)", 
                 "Yellow (Tropical)", "Lime Green (Lime)", "Green (Cactus Fruit)", 
                 "Ice (Vanilla Ice Berry)", "Sea Blue (Juneberry)", "Blue (Blueberry)", 
-                "Lilac (Acai Berry)", "Purple (Açaí)", "Peach (Variant 2)", 
-                "Peach (Variant 3)", "Peach (Variant 4)", "Peach Sugarfree", 
-                "Pink Sugarfree (Forest Fruits)", "White (Coconut & Berry)", 
-                "Spring (Sugarfree)", "Zero", "Sugarfree"
+                "Lilac (Acai Berry)", "Purple (Açaí)", "Peach Sugarfree", 
+                "Pink Sugarfree", "White (Coconut & Berry)", "Zero", "Sugarfree"
+            ],
+            "Burn Energy": [
+                "Burn Zero Watermelon", "Original", "Dark Energy", 
+                "Fruit Punch", "Apple Kiwi", "Guava", "Orange Fire", "Mango"
+            ],
+            "Non Stop": [
+                "Jungle", "Boost", "Original", "Original Zero", "Spark Zero",
+                "Ultra", "Zoom", "Stalker Orange", "Stalker Purple",
+                "Stalker Green", "Splash", "20 Years Edition", "Military", "Green Energy"
             ],
             "Hell Energy": [
-                "Hell Classic", "Hell Strong Apple", "Hell Strong Red Grape",
-                "Hell Zero Strawberry", "Hell Summer Cool (Sun Smiles)",
-                "Hell Summer Cool (Night Surf)", "Hell Ice Cool"
+                "Hell Classic", "Hell Sparkler", "Summer Cool Guanabana Mango", 
+                "Summer Cool Groovy Grapefruit", "Classic + Old", "Classic + New", 
+                "Classic 20th Anniversary", "Strong Apple", "Strong Red Grape", 
+                "Strong Watermelon", "Maracuja Spritz", "Lime Spritz", 
+                "Multi+", "Focus+", "Hell Zero Strawberry"
             ]
         };
 
@@ -148,8 +157,11 @@
             const catDiv = document.createElement('div');
             catDiv.className = 'category-container';
             
+            // Визначаємо колір лінії залежно від бренду
             let borderClass = 'm-line';
             if(category.includes('Red Bull')) borderClass = 'r-line';
+            if(category.includes('Burn')) borderClass = 'b-line';
+            if(category.includes('Non Stop')) borderClass = 'n-line';
             if(category.includes('Hell')) borderClass = 'h-line';
 
             catDiv.innerHTML = `<h2 class="${borderClass}">${category}</h2>`;
@@ -158,7 +170,7 @@
 
             items.forEach(name => {
                 totalItems++;
-                // Створюємо унікальний ID, включаючи категорію, щоб уникнути дублів (наприклад, "Classic")
+                // ID включає категорію, щоб не було конфліктів між "Original" різних брендів
                 const id = (category + "-" + name).replace(/\s+/g, '-').toLowerCase();
                 const isChecked = localStorage.getItem(id) === 'true';
 
@@ -171,11 +183,9 @@
 
                 itemDiv.onclick = (e) => {
                     const cb = itemDiv.querySelector('input');
-                    // Якщо клікнули не по самому чекбоксу, перемикаємо його вручну
                     if(e.target !== cb) {
                         cb.checked = !cb.checked;
                     }
-                    // Оновлюємо стан
                     localStorage.setItem(id, cb.checked);
                     itemDiv.classList.toggle('checked', cb.checked);
                     updateStats();
